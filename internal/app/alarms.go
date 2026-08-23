@@ -13,7 +13,7 @@ func (a *App) ReportTensionFault(ctx context.Context, newtons float64) error {
 	if newtons <= limit {
 		return nil
 	}
-	return fmt.Errorf("tension fault: %v", model.ErrTensionExceeded)
+	return fmt.Errorf("tension fault: %w", model.ErrTensionExceeded)
 }
 
 func (a *App) HandleGripSlip(ctx context.Context, slipPct float64) error {
