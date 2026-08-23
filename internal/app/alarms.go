@@ -19,7 +19,7 @@ func (a *App) ReportTensionFault(ctx context.Context, newtons float64) error {
 func (a *App) HandleGripSlip(ctx context.Context, slipPct float64) error {
 	if err := a.gripGuard.Permit(slipPct); err != nil {
 		a.stats.IncEvent("grip_slip_alarm")
-		return fmt.Errorf("line: grip slip detected at %.1f%%", slipPct)
+		return fmt.Errorf("line: grip slip detected at %.1f%%: %w", slipPct, model.ErrGripSlip)
 	}
 	_ = ctx
 	return nil
