@@ -31,6 +31,11 @@ func (r *SpeedRamp) Ramp(ctx context.Context, start, target float64, apply func(
 	step := (target - start) / float64(r.steps)
 	cur := start
 	for i := 0; i < r.steps; i++ {
+		select {
+		case <-ctx.Done():
+			return context.Cause(ctx)
+		default:
+		}
 		cur += step
 		if i == r.steps-1 {
 			cur = target
