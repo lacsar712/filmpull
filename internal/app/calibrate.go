@@ -15,12 +15,15 @@ func (a *App) CalibrateGrip(ctx context.Context, nip model.NipID, holder string)
 	if err != nil {
 		return err
 	}
+	// Release on every return path: a failed calibration (e.g. a deliberately
+	// disconnected tension sensor) must still hand back the grip segment, or the
+	// lease lingers in the registry and blocks the next changeover/stretch start.
+	defer lease.Release()
 	if CalibrateProbe != nil {
 		if err := CalibrateProbe(ctx); err != nil {
 			return fmt.Errorf("calibrate: %w", err)
 		}
 	}
-	lease.Release()
 	return nil
 }
 
