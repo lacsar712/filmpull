@@ -9,6 +9,7 @@ type ProfileSnapshot struct {
 
 func CloneProfileSnapshot(s ProfileSnapshot) ProfileSnapshot {
 	out := ProfileSnapshot{Line: s.Line}
-	out.Steps = s.Steps
+	out.Steps = make([]float64, len(s.Steps))
+	copy(out.Steps, s.Steps)
 	return out
 }
