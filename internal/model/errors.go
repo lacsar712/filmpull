@@ -17,6 +17,7 @@ var (
 	ErrTensionExceeded = errors.New("filmpull: tension exceeded")
 	ErrGripSlip        = errors.New("filmpull: grip slip detected")
 	ErrSetHold         = errors.New("filmpull: set hold not satisfied")
+	ErrEmptyPlan       = errors.New("filmpull: stretch schedule empty")
 )
 
 type DomainError struct {

@@ -29,6 +29,9 @@ func (s *LineScheduler) InstallPreheatPlan(entries []model.StretchScheduleEntry,
 }
 
 func (s *LineScheduler) InstallPreheatPlanCtx(ctx context.Context, entries []model.StretchScheduleEntry, steps int, planID string) error {
+	if len(entries) == 0 {
+		return model.Wrap("clock", "install_preheat_plan", model.ErrEmptyPlan)
+	}
 	if steps <= 0 {
 		steps = len(entries)
 	}
