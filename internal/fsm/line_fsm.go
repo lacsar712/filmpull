@@ -26,9 +26,9 @@ func (f *LineFSM) State() model.LineState { return f.state }
 func (f *LineFSM) Apply(ctx context.Context, event string) error {
 	next, err := MustLine(f.state, event)
 	if err != nil {
-		if GripDrivePulse != nil {
-			GripDrivePulse()
-		}
+		// A rejected transition must not emit a grip drive pulse: the line
+		// remains in its current state and no line-control side effect may
+		// fire. The pulse is only meaningful on acceptance into LineStretch.
 		return err
 	}
 	prev := f.state
