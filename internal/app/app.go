@@ -18,23 +18,28 @@ import (
 )
 
 type App struct {
-	cfg      config.Config
-	clk      *clock.ProcessClock
-	mem      *store.Memory
-	sched    *store.ScheduleStore
-	lineFSM  *fsm.LineFSM
-	zones    *stretch.ZoneTable
-	stretch  *stretch.Controller
-	sensors  *tension.SensorBank
-	tension  *tension.Regulator
-	nips     *nip.Coordinator
-	guard    *interlock.Guard
-	speed    *interlock.SpeedLock
-	stats    *stats.Collector
-	registry *stats.Registry
-	grade    model.FilmGrade
-	lineID   model.LineID
-	speedMPM float64
+	cfg        config.Config
+	clk        *clock.ProcessClock
+	mem        *store.Memory
+	sched      *store.ScheduleStore
+	lineFSM    *fsm.LineFSM
+	zones      *stretch.ZoneTable
+	stretch    *stretch.Controller
+	drawPlan   *stretch.DrawPlanner
+	speedCoord *stretch.SpeedCoordinator
+	sensors    *tension.SensorBank
+	tension    *tension.Regulator
+	zoneReg    *tension.ZoneRegulator
+	nips       *nip.Coordinator
+	nipRamps   *nip.RampBank
+	guard      *interlock.Guard
+	speed      *interlock.SpeedLock
+	stats      *stats.Collector
+	registry   *stats.Registry
+	grades     *model.GradeTable
+	grade      model.FilmGrade
+	lineID     model.LineID
+	speedMPM   float64
 }
 
 func New(cfg config.Config) (*App, error) {
@@ -60,17 +65,26 @@ func New(cfg config.Config) (*App, error) {
 	for i := 0; i < cfg.NipCount; i++ {
 		nipIDs[i] = model.NipID(fmt.Sprintf("nip-%d", i+1))
 	}
+	drawPlan, err := stretch.NewDrawPlanner(cfg.ZoneCount, cfg.MaxDrawRatio)
+	if err != nil {
+		return nil, err
+	}
+	grades := model.DefaultGradeTable()
 	a := &App{
 		cfg: cfg, clk: clk, mem: mem, sched: store.NewScheduleStore(mem, clk),
 		zones: zones, stretch: stretch.NewController(zones, clk, cfg.MaxDrawRatio),
+		drawPlan: drawPlan, speedCoord: stretch.NewSpeedCoordinator(cfg.ThreadingSpeed, 2.0),
 		sensors: tension.NewSensorBank(), tension: nil,
-		nips: nip.NewCoordinator(nipIDs, 600),
+		nips: nip.NewCoordinator(nipIDs, 600), nipRamps: nip.NewRampBank(),
 		guard: interlock.NewGuard(buildGuardMap(zones.Zones(), nipIDs)),
 		speed: interlock.NewSpeedLock(float64(grade.MaxLineSpeedMPM)),
 		stats: stats.NewCollector(), registry: stats.NewRegistry(),
-		grade: grade, lineID: lineID,
+		grades: grades, grade: grade, lineID: lineID,
 	}
 	a.tension = tension.NewRegulator(a.sensors, clk)
+	profile := tension.NewProfile(grade, cfg.ZoneCount)
+	a.zoneReg = tension.NewZoneRegulator(profile, a.tension, clk)
+	a.zoneReg.BindAll(zones.Zones())
 	a.lineFSM = fsm.NewLineFSM(lineID, a.onLineTransition)
 	a.persistSnapshot()
 	return a, nil
