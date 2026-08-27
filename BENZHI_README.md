@@ -1,6 +1,6 @@
-# HookRelay
+# filmpull
 
-Signed ingress + reliable outbound webhook delivery (retry, circuit breaker, rate limit, DLQ, replay).
+filmpull 是一套薄膜拉伸线工业过程控制系统，用于放卷张力、拉伸比、压辊压力与线速联锁。
 
 ## Requirements
 
